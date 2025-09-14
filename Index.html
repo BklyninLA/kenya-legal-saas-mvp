@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kenya Legal SaaS MVP (Shareable Version)</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Updated with real Kenyan legal excerpts (partial for MVP)
+    const mockLegalData = [
+      { 
+        id: 1, 
+        title: "Constitution of Kenya, 2010", 
+        content: "Preamble: We, the people of Kenya—ACKNOWLEDGING the supremacy of the Almighty God... Chapter One—Sovereignty of the People and Supremacy of This Constitution. Article 1: All sovereign power belongs to the people... Article 2: This Constitution is the supreme law... (Full chapters include rights, land, legislature, etc.)" 
+      },
+      { 
+        id: 2, 
+        title: "Land Act, 2012", 
+        content: "Part I—Preliminary Provisions. Section 1: Short title—This Act may be cited as the Land Act, 2012. Section 2: Interpretation—Defines terms like 'public land', 'community land'... Section 4: Guiding values and principles—Equitable access, security of rights... (Covers management, conversion, charges, etc.)" 
+      },
+    ];
+
+    // Updated with real Kenyan template content
+    const mockTemplates = [
+      { 
+        id: 1, 
+        name: "Sale Agreement", 
+        content: "This Agreement outlines the terms and conditions of the sale... 1. Definitions: Completion Date, Deposit... 2. Sale Terms: The Vendors agree to sell... Payment Terms: Deposit of Kshs 10 million... (Include party details, land description, payments, breaches)." 
+      },
+      { 
+        id: 2, 
+        name: "Lease Agreement", 
+        content: "TENANCY AGREEMENT: An agreement is made this... between [Tenant] and [Landlady]... 1. The lease period shall be for 11 Months... Rent: Kenya Shilling [Amount]... 2. Exclusive of utility bills... Deposit: Two months’ rent... (Includes tenant agreements on maintenance, no subletting, etc.)." 
+      },
+    ];
+
+    // Main App Component
+    function App() {
+      const [user, setUser] = useState(null);
+      const [searchQuery, setSearchQuery] = useState("");
+      const [searchResults, setSearchResults] = useState([]);
+      const [selectedTemplate, setSelectedTemplate] = useState(null);
+      const [draftContent, setDraftContent] = useState("");
+
+      // Mock login
+      const handleLogin = (email, password) => {
+        setUser({ email });
+      };
+
+      // Mock logout
+      const handleLogout = () => {
+        setUser(null);
+      };
+
+      // Improved search with highlighting
+      const handleSearch = (e) => {
+        e.preventDefault();
+        const results = mockLegalData.filter(item =>
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.content.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(results);
+      };
+
+      // Select template and set initial draft
+      const handleSelectTemplate = (template) => {
+        setSelectedTemplate(template);
+        setDraftContent(template.content);
+      };
+
+      // Download drafted document
+      const handleDownload = () => {
+        const blob = new Blob([draftContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${selectedTemplate.name}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      // Highlight query in text
+      const highlightText = (text) => {
+        if (!searchQuery) return text;
+        const regex = new RegExp(`(${searchQuery})`, 'gi');
+        return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100">
+          <header className="bg-blue-600 text-white p-4 shadow-md">
+            <div className="container mx-auto flex justify-between items-center">
+              <h1 className="text-2xl font-bold">Kenya Legal SaaS MVP</h1>
+              {user ? (
+                <div className="flex items-center">
+                  <span className="mr-4">Welcome, {user.email}</span>
+                  <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
+                </div>
+              ) : (
+                <button onClick={() => handleLogin("test@lawyer.co.ke", "password")} className="bg-green-500 px-4 py-2 rounded hover:bg-green-600">Login</button>
+              )}
+            </div>
+          </header>
+
+          <main className="container mx-auto p-4">
+            {!user ? (
+              <div className="text-center bg-white p-6 rounded shadow">
+                <h2 className="text-xl font-semibold mb-4">Log in to access Kenyan legal tools</h2>
+                <button onClick={() => handleLogin("test@lawyer.co.ke", "password")} className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">Login as Test User</button>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                <section className="bg-white p-6 rounded shadow">
+                  <h2 className="text-xl font-semibold mb-4">Search Kenyan Laws</h2>
+                  <form onSubmit={handleSearch} className="mb-4">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search laws (e.g., Constitution, Land Act)"
+                      className="border p-2 w-full rounded mb-2"
+                    />
+                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Search</button>
+                  </form>
+                  <div className="space-y-4">
+                    {searchResults.map(result => (
+                      <div key={result.id} className="border p-4 rounded bg-gray-50">
+                        <h3 className="font-semibold">{result.title}</h3>
+                        <p dangerouslySetInnerHTML={{ __html: highlightText(result.content.substring(0, 300) + '...') }}></p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="bg-white p-6 rounded shadow">
+                  <h2 className="text-xl font-semibold mb-4">Document Drafting</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {mockTemplates.map(template => (
+                      <button
+                        key={template.id}
+                        onClick={() => handleSelectTemplate(template)}
+                        className="bg-gray-200 p-4 rounded hover:bg-gray-300 transition"
+                      >
+                        {template.name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedTemplate && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">{selectedTemplate.name}</h3>
+                      <textarea
+                        className="border p-2 w-full h-48 rounded"
+                        value={draftContent}
+                        onChange={(e) => setDraftContent(e.target.value)}
+                      />
+                      <p className="text-sm text-gray-600 mt-2">Mock AI Suggestion: Add a clause for dispute resolution under Kenyan law (e.g., arbitration per Arbitration Act).</p>
+                      <button onClick={handleDownload} className="bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600">Download Draft</button>
+                    </div>
+                  )}
+                </section>
+              </div>
+            )}
+          </main>
+
+          <footer className="bg-gray-800 text-white p-4 text-center mt-8">
+            <p>&copy; 2025 Kenya Legal SaaS MVP. Share this file or host online for collaboration. Data sourced from Kenya Law Reports.</p>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
